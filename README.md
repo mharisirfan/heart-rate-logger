@@ -1,6 +1,6 @@
 # BLE Heart Rate Logger
 
-A Python tool that connects to a Bluetooth Low Energy (BLE) heart rate device (e.g. a Garmin watch) and logs live heart rate readings to a CSV file. This tool is part of a larger research project on **multi-wavelength photoplethysmography (PPG)** for wearable heart rate estimation.
+A Python tool that connects to a Bluetooth Low Energy (BLE) heart rate device (e.g. a Garmin watch) and logs live heart rate readings to a CSV file. This tool serves as the **ground truth data collector** for a larger research project comparing smartwatch HR against a custom multi-wavelength spectrometer-based sensing system.
 
 ---
 
@@ -29,12 +29,12 @@ ESP32-WROOM-32E + AS7265x Spectrometer Watch
   - 18 spectral channels (410–940 nm)
   - White / IR / UV LED illumination
   - Adjustable sampling rate (target ≥ 50 Hz)
-  - Multi-wavelength PPG signal capture
+  - Multi-wavelength spectral signal capture
 ```
 
 ### Why Multi-Wavelength?
 
-Most wearables use only a single green LED (~525 nm) for PPG. This project explores all 18 spectral bands of the AS7265x sensor to:
+Most wearables use only a single green LED (~525 nm) for heart rate sensing. This project instead uses the AS7265x spectrometer across all 18 spectral bands (410–940 nm) to:
 
 - Compare signal quality (SNR) across wavelengths
 - Identify the most robust channel per condition
