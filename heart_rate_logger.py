@@ -54,20 +54,10 @@ def log_to_csv(timestamp: str, heart_rate: int) -> None:
 
 
 async def scan_for_devices() -> list[BLEDevice]:
-    """Scan for nearby BLE devices and return those advertising the Heart Rate Service."""
+    """Scan for nearby BLE devices."""
     print("Scanning for BLE devices (5 seconds)...\n")
-    devices = await BleakScanner.discover(timeout=5.0, return_adv=False)
-
-    # Prefer devices that advertise the Heart Rate Service, but show all so the
-    # user can still pick one manually if service advertisement is missing.
-    hr_devices = [d for d in devices if HEART_RATE_SERVICE_UUID.lower() in
-                  (s.lower() for s in (d.metadata.get("uuids") or []))]
-
-    if hr_devices:
-        return hr_devices
-
-    # Fallback: return all discovered devices
-    return list(devices)
+    devices = await BleakScanner.discover(timeout=5.0)
+    return devices
 
 
 async def select_device(devices: list[BLEDevice]) -> BLEDevice:
