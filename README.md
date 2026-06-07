@@ -157,9 +157,7 @@ Observed behaviour:
 
 Image:
 
-```markdown
 ![70-80 BPM Test](images/70-80.png)
-```
 
 ---
 
@@ -173,9 +171,7 @@ Observed behaviour:
 
 Image:
 
-```markdown
 ![Above 100 BPM Test](images/above-100.png)
-```
 
 ---
 
@@ -189,9 +185,7 @@ Observed behaviour:
 
 Image:
 
-```markdown
 ![Below 70 BPM Test](images/below-70.png)
-```
 
 ---
 
