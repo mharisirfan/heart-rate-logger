@@ -8,7 +8,7 @@ The system collects heart-rate measurements from a Garmin smartwatch (ground tru
 
 # Project Context
 
-This project forms part of an MSc research investigation into wearable optical sensing using multi-wavelength spectroscopy.
+This project forms part of an MSc CS Seminar 'Prevasive Data Science" research investigation into wearable optical sensing using multi-wavelength spectroscopy, with Kevin Post as Co-Supervisor.
 
 ## Research Goal
 
@@ -54,7 +54,7 @@ Features:
 # System Architecture
 
 ```text
-Garmin Watch (BLE HR)
+GT Watch (BLE HR)
         │
         ▼
  heart_rate_logger.py
@@ -73,7 +73,7 @@ ESP32 + AS7265x
 Spectral Measurements
         │
         ▼
-FFT-based HR Estimation
+ HR Estimation
         │
         ▼
 Prototype HR
@@ -112,7 +112,7 @@ Search range:
 
 # Current Prototype Configuration
 
-Final checkpoint configuration:
+Final configuration:
 
 Sensor:
 
@@ -215,15 +215,16 @@ This significantly limits:
 * Detection of rapid HR changes
 * High-HR accuracy
 
-Higher sampling rates (>25–50 Hz) are expected to improve performance substantially.
+Higher sampling rates (>25–50 Hz) are expected to improve performance.
 
-## Limitation 2: Motion Sensitivity
+## Limitation 2: Motion Sensitivity and issues
 
 The sensor is highly sensitive to:
 
 * Wrist movement
 * Sensor pressure
 * Ambient light leakage
+* **Led becomes heated and then difficult to test, burns your hand.**
 
 These effects introduce noise and produce unstable FFT peaks.
 
@@ -253,6 +254,7 @@ While the prototype is not yet suitable for reliable heart-rate monitoring, the 
 # Future Work
 
 Planned improvements:
+**shift to a better spectral sensor that gives us better scaling rate, as the limitation of this current sensor is a blocker for accurate heart rate sensing**.
 
 * Increase sampling rate
 * Evaluate all 18 channels systematically
