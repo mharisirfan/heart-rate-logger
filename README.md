@@ -266,12 +266,14 @@ Planned improvements:
 
 ---
 
-# Author
 
 **Muhammad Haris Irfan**
 
 MSc Computer Science
 University of Tartu
+
+**Co-Supervisor:**
+Kevin Post
 
 Research Areas:
 
