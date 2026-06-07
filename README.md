@@ -1,150 +1,288 @@
-# BLE Heart Rate Logger
+# BLE Heart Rate Logger & Multi-Spectral Heart Rate Validation Platform
 
-A Python tool that connects to a Bluetooth Low Energy (BLE) heart rate device (e.g. a Garmin watch) and logs live heart rate readings to a CSV file. This tool serves as the **ground truth data collector** for a larger research project comparing smartwatch HR against a custom multi-wavelength spectrometer-based sensing system.
+A Python-based Bluetooth Low Energy (BLE) data collection and validation framework used for investigating heart-rate estimation from a custom spectrometer-based wearable prototype.
+
+The system collects heart-rate measurements from a Garmin smartwatch (ground truth) while simultaneously receiving optical measurements from a custom ESP32 + AS7265x spectrometer platform. The collected data is used to evaluate whether heart-rate information can be extracted from spectral signals using signal-processing techniques such as FFT analysis.
 
 ---
 
-## Project Context
+# Project Context
 
-This logger serves as the **ground truth data collector** for an MSc research project that investigates multi-spectral optical sensing for heart rate monitoring.
+This project forms part of an MSc research investigation into wearable optical sensing using multi-wavelength spectroscopy.
 
-### The Broader Research System
+## Research Goal
 
-```
+Traditional wearable devices typically use one or two optical wavelengths (usually green LEDs around 525 nm) for photoplethysmography (PPG).
+
+The objective of this project is to investigate whether a multi-spectral sensor can provide usable heart-rate information across a broader wavelength range.
+
+Research questions include:
+
+* Which wavelengths contain the strongest pulse information?
+* Can heart rate be estimated from spectral measurements alone?
+* Which spectral channels provide the best signal quality?
+* How does a low-cost spectrometer compare against a commercial smartwatch?
+* Can multi-channel fusion improve estimation accuracy?
+
+---
+
+# Hardware Platform
+
+## Ground Truth Device
+
+* Smart watch with BLE heartrate 
+* BLE Heart Rate Service
+* Wrist-based optical heart-rate monitor
+* Used as reference / ground truth
+
+## Prototype Device
+
+ESP32-WROOM-32E
+
+AS7265x Spectral Sensor
+
+Features:
+
+* 18 calibrated spectral channels
+* Wavelength range: 410 nm – 940 nm
+* White, IR and UV illumination
+* BLE communication
+* Real-time streaming
+
+---
+
+# System Architecture
+
+```text
 Garmin Watch (BLE HR)
         │
         ▼
- heart_rate_logger.py  ──►  heart_rate_log.csv  (Ground Truth)
-                                     │
-                                     ▼
-              ┌──────────────────────────────────┐
-              │        Validation & Analysis      │
-              │  Spectrometer HR  vs  Garmin HR   │
-              │  MAE / RMSE / Correlation         │
-              └──────────────────────────────────┘
-                                     ▲
-        ┌────────────────────────────┘
+ heart_rate_logger.py
         │
-ESP32-WROOM-32E + AS7265x Spectrometer Watch
-  - 18 spectral channels (410–940 nm)
-  - White / IR / UV LED illumination
-  - Adjustable sampling rate (target ≥ 50 Hz)
-  - Multi-wavelength spectral signal capture
-```
+        ▼
+ Ground Truth HR
+        │
+        ├──────────────┐
+        │              │
+        ▼              ▼
+Validation      Real-time Dashboard
 
-### Why Multi-Wavelength?
-
-Most wearables use only a single green LED (~525 nm) for heart rate sensing. This project instead uses the AS7265x spectrometer across all 18 spectral bands (410–940 nm) to:
-
-- Compare signal quality (SNR) across wavelengths
-- Identify the most robust channel per condition
-- Investigate whether multi-channel fusion improves HR accuracy
-- Potentially train an ML regression model using Garmin HR as labels
-
----
-
-## This Repository — BLE HR Logger
-
-### What It Does
-
-1. Scans for nearby BLE devices
-2. Prioritises devices advertising the standard Heart Rate Service (`0x180D`)
-3. Lets the user select a device from a numbered list
-4. Subscribes to Heart Rate Measurement notifications (`0x2A37`)
-5. Parses both 8-bit and 16-bit HR formats per the BLE spec
-6. Logs `timestamp, heart_rate` to `heart_rate_log.csv` in real time
-7. Prints live readings to the console
-
-### Example Output
-
-```
-Scanning for BLE devices (5 seconds)...
-
-Discovered devices:
-  [0] Garmin Forerunner — AA:BB:CC:DD:EE:FF
-
-Select device [0-0]: 0
-
-Connecting to 'Garmin Forerunner'...
-Connected. Subscribing to Heart Rate Measurement notifications.
-Press Ctrl+C to stop.
-
-[2026-03-08 14:22:01] Heart Rate: 72 BPM
-[2026-03-08 14:22:02] Heart Rate: 73 BPM
-[2026-03-08 14:22:03] Heart Rate: 74 BPM
-```
-
-### CSV Output (`heart_rate_log.csv`)
-
-```
-timestamp,heart_rate
-2026-03-08T14:22:01,72
-2026-03-08T14:22:02,73
-2026-03-08T14:22:03,74
+ESP32 + AS7265x
+        │
+        ▼
+Spectral Measurements
+        │
+        ▼
+FFT-based HR Estimation
+        │
+        ▼
+Prototype HR
 ```
 
 ---
 
-## Setup
+# Heart Rate Estimation Method
 
-### Requirements
+Current prototype heart-rate estimation uses frequency-domain analysis.
 
-- Python 3.10+
-- Bluetooth adapter (hardware)
+Pipeline:
 
-### Install Dependencies
+1. Receive spectral samples from ESP32
+2. Estimate sampling rate from timestamps
+3. Remove DC component
+4. Apply band-pass filtering
+5. Perform FFT
+6. Search for dominant frequency in physiological HR range
+7. Convert dominant frequency to BPM
 
-```bash
-pip install bleak
+Mathematically:
+
+```text
+Heart Rate (BPM) = Dominant Frequency (Hz) × 60
 ```
 
-### Garmin Watch Setup
+Search range:
 
-Enable heart rate broadcast on your watch:
-
+```text
+0.7 Hz – 2.0 Hz
+≈ 42 BPM – 120 BPM
 ```
-Settings → Sensors & Accessories → Wrist Heart Rate → Broadcast Heart Rate → On
-```
-
-This makes the watch act as a standard BLE Heart Rate sensor, readable by any BLE client without a proprietary SDK.
 
 ---
 
-## Usage
+# Current Prototype Configuration
 
-```bash
-python heart_rate_logger.py
+Final checkpoint configuration:
+
+Sensor:
+
+* AS7265x
+
+Channels evaluated:
+
+* Multiple channels investigated
+* Best results observed from channel R
+
+Sampling rate:
+
+* Approximately 7–8 Hz
+
+Integration cycles:
+
+* 2
+
+Gain:
+
+* 64×
+
+Illumination:
+
+* White LED
+
+---
+
+# Experimental Results
+
+Three heart-rate ranges were evaluated.
+
+## Resting Heart Rate (70–80 BPM)
+
+Prototype demonstrated the best performance in this range.
+
+Observed behaviour:
+
+* Prototype generally followed HR trend
+* Estimates remained relatively stable
+* Typical error within approximately ±10 BPM
+
+Image:
+
+```markdown
+![70-80 BPM Test](images/70-80.png)
 ```
 
-Stop logging at any time with `Ctrl+C`. The CSV file is appended to on each run (headers are added only if the file does not exist).
+---
+
+## Elevated Heart Rate (>100 BPM)
+
+Observed behaviour:
+
+* Prototype frequently underestimated HR
+* FFT peak became less reliable
+* Limited sampling rate reduced frequency resolution
+
+Image:
+
+```markdown
+![Above 100 BPM Test](images/above-100.png)
+```
 
 ---
 
-## BLE Technical Details
+## Lower Heart Rate (<70 BPM)
 
-| Field | Value |
-|---|---|
-| Heart Rate Service UUID | `0000180D-0000-1000-8000-00805f9b34fb` |
-| HR Measurement Characteristic | `00002A37-0000-1000-8000-00805f9b34fb` |
-| HR Format (flags bit 0 = 0) | UINT8 at `data[1]` |
-| HR Format (flags bit 0 = 1) | UINT16 little-endian at `data[1:3]` |
-| Typical update rate | 1 Hz |
+Observed behaviour:
 
----
+* Partial tracking achieved
+* Increased instability
+* Larger estimation fluctuations
 
-## Roadmap
+Image:
 
-- [x] BLE device scan and selection
-- [x] Live HR logging to CSV
-- [ ] Auto-reconnect on connection drop
-- [ ] Real-time HR plot (matplotlib)
-- [ ] Session-based output folders with timestamps
-- [ ] Synchronisation tool — align Garmin CSV with spectrometer CSV
-- [ ] Validation metrics (MAE, RMSE, Bland–Altman)
-- [ ] ML regression pipeline using Garmin HR as ground truth labels
+```markdown
+![Below 70 BPM Test](images/below-70.png)
+```
 
 ---
 
-## Author
+# Discussion
 
-**Haris Irfan** — MSc student, embedded systems & wearable sensing research
+Results indicate that physiological pulse information is present within the measured spectral signal.
+
+The prototype successfully demonstrates:
+
+* Detection of periodic biological signals
+* Extraction of pulse-related frequency components
+* Approximate heart-rate estimation at resting HR levels
+
+However, several limitations were observed.
+
+## Limitation 1: Sampling Rate
+
+Current sampling rate:
+
+```text
+≈ 7.7 Hz
+```
+
+This significantly limits:
+
+* FFT frequency resolution
+* Detection of rapid HR changes
+* High-HR accuracy
+
+Higher sampling rates (>25–50 Hz) are expected to improve performance substantially.
+
+## Limitation 2: Motion Sensitivity
+
+The sensor is highly sensitive to:
+
+* Wrist movement
+* Sensor pressure
+* Ambient light leakage
+
+These effects introduce noise and produce unstable FFT peaks.
+
+## Limitation 3: Channel Selection
+
+Not all spectral channels contain useful pulse information.
+
+Experiments suggest that some channels consistently outperform others, indicating that wavelength selection is an important factor in wearable optical sensing.
+
+---
+
+# Conclusion
+
+This work demonstrates that heart-rate information can be extracted from a low-cost multi-spectral sensing platform.
+
+Key findings:
+
+* Pulse-related information is present in spectral measurements.
+* Resting heart rates (70–80 BPM) produced the most reliable estimates.
+* Accuracy deteriorated at low and high heart-rate ranges.
+* Sampling rate appears to be the primary technical limitation of the current prototype.
+
+While the prototype is not yet suitable for reliable heart-rate monitoring, the results validate the feasibility of using multi-spectral optical sensing as a foundation for future wearable heart-rate estimation systems.
+
+---
+
+# Future Work
+
+Planned improvements:
+
+* Increase sampling rate
+* Evaluate all 18 channels systematically
+* Compare SNR across wavelengths
+* Investigate channel fusion methods
+* Collect larger datasets
+* Perform MAE and RMSE evaluation
+* Explore machine-learning-based HR estimation
+* Investigate adaptive filtering techniques
+* Design improved wearable enclosure
+
+---
+
+# Author
+
+**Muhammad Haris Irfan**
+
+MSc Computer Science
+University of Tartu
+
+Research Areas:
+
+* Embedded Systems
+* Wearable Sensing
+* Optical Signal Processing
+* Biomedical Signal Analysis
+* Machine Learning for Sensor Systems
